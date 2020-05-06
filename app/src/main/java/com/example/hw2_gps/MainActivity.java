@@ -34,22 +34,30 @@ public class MainActivity extends AppCompatActivity {
         button = findViewById(R.id.button);
         textView = findViewById(R.id.textView);
 
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                textView.setText("(" + location.getLatitude() + "," + location.getLongitude() + ")");
+            }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[] {
-                        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.INTERNET
-                }, 10);
-                return;
+            @Override
+            public void onStatusChanged(String s, int i, Bundle bundle) {
+
             }
-            else {
-                Toast.makeText(getApplicationContext(), "Granted", Toast.LENGTH_SHORT).show();
-                configureButton();
+
+            @Override
+            public void onProviderEnabled(String s) {
+
             }
-        } else {
-            configureButton();
-        }
+
+            @Override
+            public void onProviderDisabled(String s) {
+                Intent intent = new Intent(Settings.ACTION_LOCALE_SETTINGS);
+                startActivity(intent);
+            }
+        };
+        configureButton();
     }
 
     @Override
@@ -57,9 +65,10 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case 10:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                    configureButton();
+                    return;
+            default:
+                Toast.makeText(getApplicationContext(), "GPS Not Granted", Toast.LENGTH_LONG).show();
                 return;
-
         }
     }
 
@@ -68,32 +77,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 textView.setText("hi");
-
-                locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-                locationListener = new LocationListener() {
-                    @Override
-                    public void onLocationChanged(Location location) {
-                        textView.setText("(" + location.getLatitude() + "," + location.getLongitude() + ")");
-                    }
-
-                    @Override
-                    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-                    }
-
-                    @Override
-                    public void onProviderEnabled(String s) {
-
-                    }
-
-                    @Override
-                    public void onProviderDisabled(String s) {
-                        Intent intent = new Intent(Settings.ACTION_LOCALE_SETTINGS);
-                        startActivity(intent);
-                    }
-                };
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                        && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{
+                            Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.INTERNET}, 10);
+                }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 2, locationListener);
-
             }
         });
     }
